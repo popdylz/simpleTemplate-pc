@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>PC日销模版</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+        <meta name="description" content="">
+        <meta name="keywords" content="">
+        <link rel="stylesheet" type="text/css" href="style/page.css?v=20170310">
+    </head>
+    <body>
+        <div class="mainBox">
+            <img src="images/mainPic_01.jpg" />
+            <img src="images/mainPic_02.jpg" />
+            <img src="images/mainPic_03.jpg" />
+            <!-- 优中精选 -->
+            <img src="images/floor3.png" class="space3" />
+            <div id="floorBox">
+                <!-- 商品列表 -->
+                <div class="goodsBox" v-for="(floor,index) in floors">
+                    <a href="#javascript" :id="'f0'+(index+1)" class="tiaozhuan"></a>
+                    <nav-plugin></nav-plugin>
+                    <goods-list :floor-data="floor"></goods-list>
+                </div>
+            </div>
+
+            <!-- 主体内容结束 -->
+        </div>
+        <script src="js/jquery-1.11.2.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="js/vue.js" type="text/javascript" charset="utf-8"></script>
+        <script src="js/data.js" type="text/javascript" charset="utf-8"></script>
+        <script type="text/javascript">
+            $(function() {
+                //楼层跳转组件
+                Vue.component('nav-plugin', {
+                    template: '\
+                        <ul class="nav-box">\
+                            <li class="nav-btn" data-slide="f01"></li>\
+                            <li class="nav-btn" data-slide="f02"></li>\
+                            <li class="nav-btn" data-slide="f03"></li>\
+                            <li class="nav-btn" data-slide="f04"></li>\
+                        </ul>\
+                    ',
+                });
+                //商品模块组件
+                Vue.component('goods-list', {
+                    template: '\
+                        <div>\
+                            <a v-for="(ele,index) in floorData" :href="[ele.goodsLink ? ele.goodsLink : linkSrc(ele)]" target="_blank" class="goodsPane">\
+                                <img :src="[ele.goodsImg ? ele.goodsImg : imgSrc(ele)]" class="goodsImg"/>\
+                                <p class="goodsName">{{ ele.goodsName }}</p>\
+                                <p class="goodsDescription">{{ ele.goodsDescription }}</p>\
+                                <div v-if="ele.goodsCode" :data-code="ele.goodsCode">\
+                                   <p class="goodsPrice">原价 :￥<span></span></p>\
+                                   <p class="goodsSale">易购价 :￥<span></span></p>\
+                                </div>\
+                                <div v-else>\
+                                   <p class="goodsPrice">原价 :￥<span>{{ ele.goodsPrice }}</span></p>\
+                                   <p class="goodsSale">易购价 :￥<span>{{ ele.goodsSale }}</span></p>\
+                                </div>\
+                                <div class="goodsBuy">立即购买</div>\
+                            </a>\
+                        </div>\
+                    ',
+                    props: ['floorData'],
+                    methods: {
+                        linkSrc: function(value) {
+                            return 'http://product.suning.com/' + value.goodsCode + '.html'
+                        },
+                        imgSrc: function(value) {
+                            return 'https://image.suning.cn/uimg/b2c/newcatentries/0000000000-' + value.goodsCode + '_1_400x400.jpg'
+                        }
+                    }
+                });
+
+                new Vue({
+                    el: "#floorBox",
+                    data: {
+                        floors: data
+                    }
+                });
+                //根据商品编码从后台返回价格
+                for(var i in data) {
+                    for(var j in data[i]) {
+                        var code = data[i][j].goodsCode;
+                        if(code) {
+                            $.get('http://icps.suning.com/icps-web/getVarnishAllPrice014/' + code + '_025__0000000000_1_priceServiceCallBack.vhtm', function(data) {}, 'jsonp');
+                            window.priceServiceCallBack = function(information) {
+                                $('[data-code=' + information[0].cmmdtyCode + ']').find('.goodsPrice span').html(information[0].refPrice);
+                                $('[data-code=' + information[0].cmmdtyCode + ']').find('.goodsSale span').html(information[0].price);
+                            };
+                        };
+                    };
+                };
+                //楼层跳转缓动
+                $('[data-slide]').click(function() {
+                    var idx = $(this).attr("data-slide"),
+                        slideHeight = $("#" + idx).offset().top;
+                    $('html,body').animate({ scrollTop: slideHeight }, 300)
+                });
+
+                $('.goodsPane:nth-child(4n)').css("margin-right", "0");
+                $('.goodsPane').hover(function() {
+                    $(this).toggleClass('css3-up');
+                });
+            })
+        </script>
+    </body>
+</html>
